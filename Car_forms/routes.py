@@ -8,7 +8,7 @@ from flask_login import login_user, current_user, logout_user, login_required
 @app.route("/")
 @app.route("/home")
 def home():
-    return render_template('home.html', posts=posts)
+    return render_template('home.html')
 
 
 @app.route("/about")
@@ -16,8 +16,8 @@ def about():
     return render_template('about.html', title='About')
 
 
-@app.route("/register", methods=['GET', 'POST'])
-def register():
+@app.route("/sign_up", methods=['GET', 'POST'])
+def sign_up():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
     form = RegistrationForm()
@@ -28,7 +28,7 @@ def register():
         db.session.commit()
         flash('Your account has been created! You are now able to log in')
         return redirect(url_for('login'))
-    return render_template('register.html', title='Register', form=form)
+    return render_template('sign_up.html', title='Sign_up', form=form)
 
 
 @app.route("/login", methods=['GET', 'POST'])

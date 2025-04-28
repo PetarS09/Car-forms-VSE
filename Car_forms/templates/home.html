@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - Car Forms</title>
+</head>
+<body>
+    <h1>Welcome to Car Forms!</h1>
+
+    <div style="margin: 20px;">
+        <a href="{{ url_for('sign_up') }}" style="padding: 10px 20px; background-color: green; color: white; text-decoration: none; margin-right: 10px;">Sign Up</a>
+        <a href="{{ url_for('login') }}" style="padding: 10px 20px; background-color: blue; color: white; text-decoration: none;">Login</a>
+    </div>
+
+    <hr>
+
+    <h2>Recent Posts</h2>
+
+    {% for post in posts %}
+        <div style="border: 1px solid black; padding: 10px; margin-bottom: 10px;">
+            <h3>{{ post.title }}</h3>
+            <p><strong>By:</strong> {{ post.author.username }}</p>
+            <p><strong>Date:</strong> {{ post.date_posted.strftime('%Y-%m-%d') }}</p>
+            <p>{{ post.content }}</p>
+        </div>
+    {% else %}
+        <p>No posts have been created yet!</p>
+    {% endfor %}
+</body>     
+</html>
