@@ -8,8 +8,14 @@
     <h1>Welcome to Car Forms!</h1>
 
     <div style="margin: 20px;">
+        {% if current_user.is_authenticated %}
+        <p>Hello, {{ current_user.username }}!</p>
+        <a href="{{ url_for('logout') }}" style="padding: 10px 20px; background-color: red; color: white; text-decoration: none;">Logout</a>
+    {% else %}
+        <p>Please log in or sign up to create a post.</p>   
         <a href="{{ url_for('sign_up') }}" style="padding: 10px 20px; background-color: green; color: white; text-decoration: none; margin-right: 10px;">Sign Up</a>
         <a href="{{ url_for('login') }}" style="padding: 10px 20px; background-color: blue; color: white; text-decoration: none;">Login</a>
+    {% endif %} 
     </div>
 
     <hr>
