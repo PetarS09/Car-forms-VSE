@@ -10,6 +10,8 @@
     <div style="margin: 20px;">
         {% if current_user.is_authenticated %}
         <p>Hello, {{ current_user.username }}!</p>
+        <a href="{{ url_for('account') }}" style="padding: 10px 20px; background-color: blue; color: white; text-decoration: none; margin-right: 10px;">Account</a>
+        <a href="{{ url_for('create_post') }}" style="padding: 10px 20px; background-color: green; color: white; text-decoration: none; margin-right: 10px;">Create Post</a>
         <a href="{{ url_for('logout') }}" style="padding: 10px 20px; background-color: red; color: white; text-decoration: none;">Logout</a>
     {% else %}
         <p>Please log in or sign up to create a post.</p>   
