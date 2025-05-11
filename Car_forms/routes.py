@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request
 from Car_forms import app, db, bcrypt
-from Car_forms.forms import RegistrationForm, LoginForm,UpdateAccountForm
+from Car_forms.forms import RegistrationForm, LoginForm,UpdateAccountForm,PostForm
 from Car_forms.models import User, Post
 from flask_login import login_user, current_user, logout_user, login_required
 from PIL import Image
@@ -10,7 +10,8 @@ import secrets
 @app.route("/")
 @app.route("/home")
 def home():
-    return render_template('home.html')
+    post = Post.query.all()
+    return render_template('home.html',posts=post, title='Home Page')
 
 
 @app.route("/about")
@@ -28,9 +29,12 @@ def sign_up():
         user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        flash('Your account has been created! You are now able to log in')
+        flash('Your account has been created! You are now able to log in!', 'success')
         return redirect(url_for('login'))
-    return render_template('sign_up.html', title='Sign_up', form=form)
+    else:
+        if form.errors:
+            flash('Please correct the errors in the form.', 'danger')
+    return render_template('sign_up.html', title='Sign Up', form=form)
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -79,9 +83,13 @@ def account():
             current_user.image_file = picture_file
         current_user.username = form.username.data
         current_user.email = form.email.data
-        db.session.commit()
-        flash('Your account has been updated!', 'success')
-        return redirect(url_for('account'))
+        if form.username.data == current_user.username and form.email.data == current_user.email and not form.picture.data:
+            flash('No changes made to your account.', 'info')
+            return redirect(url_for('account'))
+        else:
+            db.session.commit()
+            flash('Your account has been updated!', 'success')
+            return redirect(url_for('account'))
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.email.data = current_user.email
@@ -91,11 +99,13 @@ def account():
 @app.route("/post/new", methods=['GET', 'POST'])
 @login_required
 def create_post():
-    """form = PostForm()
+    form = PostForm()
     if form.validate_on_submit():
         post = Post(title=form.title.data, content=form.content.data, author=current_user)
         db.session.add(post)
         db.session.commit()
         flash('Your post has been created!', 'success')
-        return redirect(url_for('home'))"""
-    return render_template('create_post.html')
+        return redirect(url_for('create_post'))
+    
+    posts = Post.query.filter_by(author=current_user).order_by(Post.date_posted.desc()).all()
+    return render_template('create_post.html', form=form, posts=posts)
