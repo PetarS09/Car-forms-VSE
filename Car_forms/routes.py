@@ -10,7 +10,7 @@ import secrets
 @app.route("/")
 @app.route("/home")
 def home():
-    post = Post.query.all()
+    post = Post.query.order_by(Post.date_posted.desc()).all()
     return render_template('home.html',posts=post, title='Home Page')
 
 
