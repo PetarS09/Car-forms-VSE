@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request
 from Car_forms import app, db, bcrypt
-from Car_forms.forms import RegistrationForm, LoginForm,UpdateAccountForm,PostForm
+from Car_forms.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
 from Car_forms.models import User, Post
 from flask_login import login_user, current_user, logout_user, login_required
 from PIL import Image
@@ -11,7 +11,7 @@ import secrets
 @app.route("/home")
 def home():
     post = Post.query.order_by(Post.date_posted.desc()).all()
-    return render_template('home.html',posts=post, title='Home Page')
+    return render_template('home.html', posts=post, title='Home Page')
 
 
 @app.route("/about")
@@ -49,7 +49,7 @@ def login():
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('home'))
         else:
-            flash('Login Unsuccessful. Please check email and password')
+            flash('Login Unsuccessful. Please check email and password', 'danger')
     return render_template('login.html', title='Login', form=form)
 
 
@@ -66,6 +66,20 @@ def save_picture(form_picture):
     picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
 
     output_size = (125, 125)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    i.save(picture_path)
+
+    return picture_fn
+
+
+def save_post_picture(form_picture):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    picture_path = os.path.join(app.root_path, 'static/post_pics', picture_fn)
+
+    output_size = (800, 800)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
     i.save(picture_path)
@@ -96,40 +110,50 @@ def account():
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Account', image_file=image_file, form=form)
 
+
 @app.route("/post/new", methods=['GET', 'POST'])
 @login_required
 def create_post():
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(title=form.title.data, content=form.content.data, author=current_user)
+        if form.picture.data:
+            picture_file = save_post_picture(form.picture.data)
+            post = Post(title=form.title.data, content=form.content.data, author=current_user, image_file=picture_file)
+        else:
+            post = Post(title=form.title.data, content=form.content.data, author=current_user)
         db.session.add(post)
         db.session.commit()
         flash('Your post has been created!', 'success')
         return redirect(url_for('create_post'))
-    
+
     posts = Post.query.filter_by(author=current_user).order_by(Post.date_posted.desc()).all()
     return render_template('create_post.html', form=form, posts=posts)
 
+
 @app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
-@login_required 
+@login_required
 def update_post(post_id):
     post = Post.query.get_or_404(post_id)
     if post.author != current_user:
         flash('You are not authorized to edit this post.', 'danger')
         return redirect(url_for('home'))
-    
+
     form = PostForm()
     if form.validate_on_submit():
         post.title = form.title.data
         post.content = form.content.data
+        if form.picture.data:
+            picture_file = save_post_picture(form.picture.data)
+            post.image_file = picture_file
         db.session.commit()
         flash('Your post has been updated!', 'success')
         return redirect(url_for('create_post'))
     elif request.method == 'GET':
         form.title.data = post.title
         form.content.data = post.content
-    
+
     return render_template('create_post.html', form=form, post=post)
+
 
 @app.route("/post/<int:post_id>/delete", methods=['POST'])
 @login_required
@@ -138,7 +162,7 @@ def delete_post(post_id):
     if post.author != current_user:
         flash('You are not authorized to delete this post.', 'danger')
         return redirect(url_for('home'))
-    
+
     db.session.delete(post)
     db.session.commit()
     flash('Your post has been deleted!', 'success')

@@ -41,7 +41,7 @@
         {% endwith %}
 
         {% if form %}
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
 
             <div class="mb-3">
@@ -56,10 +56,16 @@
                 {% for error in form.content.errors %}<div class="text-danger">{{ error }}</div>{% endfor %}
             </div>
 
+            <div class="mb-3">
+                {{ form.picture.label(class="form-label") }}
+                {{ form.picture(class="form-control") }}
+                {% for error in form.picture.errors %}<div class="text-danger">{{ error }}</div>{% endfor %}
+            </div>
+
             {{ form.submit(class="btn btn-success") }}
         </form>
         {% else %}
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="title" class="form-label">Title:</label>
                 <input type="text" id="title" name="title" class="form-control" required />
@@ -68,6 +74,11 @@
             <div class="mb-3">
                 <label for="content" class="form-label">Content:</label>
                 <textarea id="content" name="content" rows="5" class="form-control" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label for="picture" class="form-label">Post Image (optional):</label>
+                <input type="file" id="picture" name="picture" class="form-control" accept="image/*" />
             </div>
 
             <button type="submit" class="btn btn-success">Submit</button>
@@ -83,6 +94,11 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ post.title }}</h5>
                         <h6 class="card-subtitle text-muted mb-2">Posted on {{ post.date_posted.strftime('%Y-%m-%d') }}</h6>
+
+                        {% if post.image_file %}
+                            <img src="{{ url_for('static', filename='post_pics/' + post.image_file) }}" alt="Post Image" style="max-width: 100%; max-height: 400px; border-radius: 8px; margin-bottom: 10px;">
+                        {% endif %}
+
                         <p class="card-text">{{ post.content }}</p>
 
                         {% if current_user.is_authenticated and post.author == current_user %}
