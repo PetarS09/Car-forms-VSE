@@ -109,3 +109,37 @@ def create_post():
     
     posts = Post.query.filter_by(author=current_user).order_by(Post.date_posted.desc()).all()
     return render_template('create_post.html', form=form, posts=posts)
+
+@app.route("/post/<int:post_id>/update", methods=['GET', 'POST'])
+@login_required 
+def update_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        flash('You are not authorized to edit this post.', 'danger')
+        return redirect(url_for('home'))
+    
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title = form.title.data
+        post.content = form.content.data
+        db.session.commit()
+        flash('Your post has been updated!', 'success')
+        return redirect(url_for('create_post'))
+    elif request.method == 'GET':
+        form.title.data = post.title
+        form.content.data = post.content
+    
+    return render_template('create_post.html', form=form, post=post)
+
+@app.route("/post/<int:post_id>/delete", methods=['POST'])
+@login_required
+def delete_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    if post.author != current_user:
+        flash('You are not authorized to delete this post.', 'danger')
+        return redirect(url_for('home'))
+    
+    db.session.delete(post)
+    db.session.commit()
+    flash('Your post has been deleted!', 'success')
+    return redirect(url_for('home'))
