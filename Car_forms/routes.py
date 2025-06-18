@@ -1,17 +1,51 @@
 from flask import render_template, url_for, flash, redirect, request
 from Car_forms import app, db, bcrypt
-from Car_forms.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
-from Car_forms.models import User, Post
+from Car_forms.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm, CommentForm, ReplyForm
+from Car_forms.models import User, Post,Comment
 from flask_login import login_user, current_user, logout_user, login_required
 from PIL import Image
 import os
 import secrets
 
-@app.route("/")
-@app.route("/home")
+from flask import request, redirect, url_for, flash
+
+@app.route("/", methods=["GET", "POST"])
 def home():
-    post = Post.query.order_by(Post.date_posted.desc()).all()
-    return render_template('home.html', posts=post, title='Home Page')
+    comment_form = CommentForm()
+    reply_form = ReplyForm()
+
+    if request.method == "POST":
+        if "comment_submit" in request.form and comment_form.validate_on_submit():
+            # New top-level comment
+            content = comment_form.content.data
+            new_comment = Comment(content=content, user_id=current_user.id, post_id=int(request.form.get("post_id")), parent_id=None)
+            db.session.add(new_comment)
+            db.session.commit()
+            flash("Comment posted!", "success")
+            return redirect(url_for("home"))
+
+        if "reply_submit" in request.form and reply_form.validate_on_submit():
+            # Reply to a comment
+            content = reply_form.content.data
+            post_id = int(request.form.get("post_id"))
+            parent_id_raw = request.form.get("parent_id")
+            parent_id = int(parent_id_raw) if parent_id_raw else None
+
+            new_reply = Comment(content=content, user_id=current_user.id, post_id=post_id, parent_id=parent_id)
+            db.session.add(new_reply)
+            db.session.commit()
+            flash("Reply posted!", "success")
+            return redirect(url_for("home"))
+
+    posts = Post.query.order_by(Post.date_posted.desc()).all()
+    # Prepare top-level comments and replies for template as explained before
+    for post in posts:
+        post.top_level_comments = [c for c in post.comments if c.parent_id is None]
+        for comment in post.top_level_comments:
+            comment.sorted_replies = comment.replies.order_by(Comment.date_posted).all()
+
+    return render_template("home.html", posts=posts, comment_form=comment_form, reply_form=reply_form)
+
 
 
 @app.route("/about")

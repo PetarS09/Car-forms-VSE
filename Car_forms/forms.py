@@ -59,3 +59,11 @@ class PostForm(FlaskForm):
     content = TextAreaField('Content', validators=[DataRequired()])
     picture = FileField('Upload Image', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Post')
+    
+class CommentForm(FlaskForm):
+    content = TextAreaField('Comment', validators=[DataRequired()])
+    submit = SubmitField('Post Comment')
+    
+class ReplyForm(FlaskForm):
+    content = TextAreaField('Reply', validators=[DataRequired()])
+    submit = SubmitField('Reply')

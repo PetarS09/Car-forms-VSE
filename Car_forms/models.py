@@ -30,3 +30,23 @@ class Post(db.Model):
 
     def __repr__(self):
         return f"Post('{self.title}', '{self.date_posted}')"
+    
+class Comment(db.Model):
+    comment_id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+    user = db.relationship('User', backref='comments')
+    post = db.relationship('Post', backref='comments')
+    
+    parent_id = db.Column(db.Integer, db.ForeignKey('comment.comment_id'), nullable=True)
+    replies = db.relationship('Comment', backref=db.backref('parent', remote_side=[comment_id]), lazy='dynamic')
+
+    def is_reply(self):
+        return self.parent_id is not None
+    def __repr__(self):
+        return f"Comment('{self.content}', '{self.date_posted}')"
+    
